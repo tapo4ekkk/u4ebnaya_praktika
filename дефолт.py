@@ -109,6 +109,9 @@ class PingPongGame(QWidget):
             self.left_score += 1
             self.reset_ball()
 
+        # Проверяем условия для обновления рекордов
+        self.update_records()
+
         self.update()
 
     def reset_ball(self):
@@ -123,6 +126,34 @@ class PingPongGame(QWidget):
     def exit_to_menu(self):
         if self.exit_to_menu_callback:
             self.exit_to_menu_callback()
+
+    def update_records(self):
+        # Чтение текущих рекордов из файла
+        try:
+            with open("D:\\игра\\records.txt", "r") as file:
+                lines = file.readlines()
+
+            left_time, right_time = float(lines[1].strip()), float(lines[2].strip())
+        except FileNotFoundError:
+            left_time, right_time = float('inf'), float('inf')  # Если файл не существует, считаем время бесконечным
+        except IndexError:
+            left_time, right_time = float('inf'), float('inf')  # Не хватает строк в файле
+
+        # Проверка, достиг ли левый игрок 10 очков
+        if self.left_score == 10 and self.elapsed_time < left_time:
+            with open("D:\\игра\\records.txt", "r") as file:
+                lines = file.readlines()
+            lines[1] = f"{self.elapsed_time}\n"  # Обновляем время для левого игрока
+            with open("D:\\игра\\records.txt", "w") as file:
+                file.writelines(lines)
+
+        # Проверка, достиг ли правый игрок 10 очков
+        if self.right_score == 10 and self.elapsed_time < right_time:
+            with open("D:\\игра\\records.txt", "r") as file:
+                lines = file.readlines()
+            lines[2] = f"{self.elapsed_time}\n"  # Обновляем время для правого игрока
+            with open("D:\\игра\\records.txt", "w") as file:
+                file.writelines(lines)
 
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
