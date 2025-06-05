@@ -16,7 +16,6 @@ class PingPongGame(QWidget):
         self.paddle_length = paddle_length
         self.exit_to_menu_callback = exit_to_menu_callback
 
-        # Инициализация мяча и ракеток
         self.ball_x = 900
         self.ball_y = 300
         self.ball_dx = self.ball_speed * random.choice((1, -1))
@@ -25,56 +24,48 @@ class PingPongGame(QWidget):
         self.left_paddle_y = 250
         self.right_paddle_y = 250
 
-        # Счет
         self.left_score = 0
         self.right_score = 0
 
-        # Таймер и время
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_game)
-        self.timer.start(16)  # 60 FPS
+        self.timer.start(16)
 
-        self.elapsed_time = 0  # Время в игре
+        self.elapsed_time = 0
         self.time_timer = QTimer(self)
         self.time_timer.timeout.connect(self.update_time)
-        self.time_timer.start(1000)  # Обновление каждую секунду
+        self.time_timer.start(1000)
 
         self.back_to_menu_button = QPushButton("В меню", self)
         self.back_to_menu_button.setGeometry(60, 10, 100, 30)
         self.back_to_menu_button.clicked.connect(self.exit_to_menu)
-        
-        # Инициализация и воспроизведение музыки
+
         self.player = QMediaPlayer()
-        self.player.setMedia(QMediaContent(QUrl.fromLocalFile("D:\\игра\\Тетрис - Тетрис.mp3")))
-        self.player.setVolume(50)  # Уровень громкости (0-100)
-        self.player.play()  # Начать воспроизведение
+        self.player.setMedia(QMediaContent(QUrl.fromLocalFile("D:\\учеба\\игра\\Тетрис - Тетрис.mp3")))
+        self.player.setVolume(50)
+        self.player.play()
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setBrush(Qt.white)
 
-        # Ракетки
-        painter.drawRect(50, self.left_paddle_y, 10, self.paddle_length)  # Левый
-        painter.drawRect(1850, self.right_paddle_y, 10, self.paddle_length)  # Правый
+        painter.drawRect(50, self.left_paddle_y, 10, self.paddle_length)
+        painter.drawRect(1850, self.right_paddle_y, 10, self.paddle_length)
 
-        # Мяч
         painter.drawEllipse(self.ball_x, self.ball_y, 15, 15)
 
-        # Счет
         painter.drawText(900, 50, f"Счет: {self.left_score}  -  {self.right_score}")
 
-        # Время
         minutes = self.elapsed_time // 60
         seconds = self.elapsed_time % 60
         painter.drawText(900, 100, f"Время: {minutes:02}:{seconds:02}")
-        
-        # Границы
+
         pen = QPen(Qt.red, 2)
         painter.setPen(pen)
-        painter.drawLine(50, 0, 1860, 0)  # Верхняя граница
-        painter.drawLine(50, 1000, 1860, 1000)  # Нижняя граница
-        painter.drawLine(50, 0, 50, 1000)  # Левая граница
-        painter.drawLine(1860, 0, 1860, 1000)  # Правая граница
+        painter.drawLine(50, 0, 1860, 0)
+        painter.drawLine(50, 1000, 1860, 1000)
+        painter.drawLine(50, 0, 50, 1000)
+        painter.drawLine(1860, 0, 1860, 1000)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key_W and self.left_paddle_y > 10:
@@ -88,20 +79,16 @@ class PingPongGame(QWidget):
         self.update()
 
     def update_game(self):
-        # Обновление позиции мяча
         self.ball_x += self.ball_dx
         self.ball_y += self.ball_dy
 
-        # Столкновения с верхом и низом
         if self.ball_y <= 0 or self.ball_y >= 985:
             self.ball_dy *= -1
-        
-        # Столкновения с ракетками
+
         if (self.ball_x <= 60 and self.left_paddle_y < self.ball_y < self.left_paddle_y + self.paddle_length) or \
            (self.ball_x >= 1840 and self.right_paddle_y < self.ball_y < self.right_paddle_y + self.paddle_length):
             self.ball_dx *= -1
-        
-        # Если мяч выходит за границы
+
         if self.ball_x < 50:
             self.right_score += 1
             self.reset_ball()
@@ -109,9 +96,7 @@ class PingPongGame(QWidget):
             self.left_score += 1
             self.reset_ball()
 
-        # Проверяем условия для обновления рекордов
         self.update_records()
-
         self.update()
 
     def reset_ball(self):
@@ -128,31 +113,37 @@ class PingPongGame(QWidget):
             self.exit_to_menu_callback()
 
     def update_records(self):
-        # Чтение текущих рекордов из файла
+        records_path = "D:\\учеба\\игра\\records.txt"
+
         try:
-            with open("D:\\игра\\records.txt", "r") as file:
+            with open(records_path, "r") as file:
                 lines = file.readlines()
-
-            left_time, right_time = float(lines[1].strip()), float(lines[2].strip())
         except FileNotFoundError:
-            left_time, right_time = float('inf'), float('inf')  # Если файл не существует, считаем время бесконечным
-        except IndexError:
-            left_time, right_time = float('inf'), float('inf')  # Не хватает строк в файле
-
-        # Проверка, достиг ли левый игрок 10 очков
-        if self.left_score == 10 and self.elapsed_time < left_time:
-            with open("D:\\игра\\records.txt", "r") as file:
-                lines = file.readlines()
-            lines[1] = f"{self.elapsed_time}\n"  # Обновляем время для левого игрока
-            with open("D:\\игра\\records.txt", "w") as file:
+            lines = ["Рекорды игроков:\n", "9999\n", "9999\n"]
+            with open(records_path, "w") as file:
                 file.writelines(lines)
 
-        # Проверка, достиг ли правый игрок 10 очков
+        while len(lines) < 3:
+            lines.append("9999\n")
+
+        try:
+            left_time = float(lines[1].strip())
+            right_time = float(lines[2].strip())
+        except ValueError:
+            left_time = right_time = 9999
+
+        updated = False
+
+        if self.left_score == 10 and self.elapsed_time < left_time:
+            lines[1] = f"{self.elapsed_time}\n"
+            updated = True
+
         if self.right_score == 10 and self.elapsed_time < right_time:
-            with open("D:\\игра\\records.txt", "r") as file:
-                lines = file.readlines()
-            lines[2] = f"{self.elapsed_time}\n"  # Обновляем время для правого игрока
-            with open("D:\\игра\\records.txt", "w") as file:
+            lines[2] = f"{self.elapsed_time}\n"
+            updated = True
+
+        if updated:
+            with open(records_path, "w") as file:
                 file.writelines(lines)
 
 class SettingsDialog(QDialog):
@@ -202,7 +193,7 @@ class LeaderboardDialog(QDialog):
 
     def load_leaderboard(self):
         try:
-            with open("D:\\игра\\records.txt", "r") as file:
+            with open("D:\\учеба\\игра\\records.txt", "r") as file:
                 self.leaderboard_text.setText(file.read())
         except FileNotFoundError:
             self.leaderboard_text.setText("Файл с рекордами не найден.")
@@ -256,7 +247,7 @@ class MainMenu(QWidget):
             self.ball_speed, self.paddle_length = settings_dialog.get_settings()
 
     def show_rules(self):
-        QMessageBox.information(self, "Правила", "Перемещайте ракетки, чтобы отбивать мяч. Счет бесконечный.")
+        QMessageBox.information(self, "Правила", "Перемещать ракетки чтобы отбивать мяч, при достижении 10 очков, если время меньше того, что в лидерборде, в него записывается новый рекорд отдельно для правого и левого игрока, игра бесконечная")
 
     def show_leaderboard(self):
         leaderboard_dialog = LeaderboardDialog(self)
